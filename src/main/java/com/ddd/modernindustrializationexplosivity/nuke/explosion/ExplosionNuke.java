@@ -10,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import com.ddd.modernindustrializationexplosivity.nuke.compat.ChunkCoordIntPair;
 
@@ -158,6 +159,7 @@ public class ExplosionNuke {
          List<ExplosionNuke.FloatTriplet> list = this.perChunk.get(coord);
          HashSet<BlockPos> toRem = new HashSet<>();
          HashSet<BlockPos> toRemTips = new HashSet<>();
+         HashSet<BlockPos> toDisplace = new HashSet<>();
          int chunkX = coord.chunkXPos;
          int chunkZ = coord.chunkZPos;
          // The prior distance estimate could begin after a ray had already crossed a
@@ -184,8 +186,14 @@ public class ExplosionNuke {
                int z0 = (int)Math.floor((double)this.posZ + pZ * (double)i);
                if (x0 >> 4 == chunkX && z0 >> 4 == chunkZ) {
                   inChunk = true;
-                  if (!this.world.isEmptyBlock(new BlockPos(x0, y0, z0)) && this.shouldDestroyAt(x0, y0, z0)) {
+                  if (!this.world.isEmptyBlock(new BlockPos(x0, y0, z0))) {
                      BlockPos pos = new BlockPos(x0, y0, z0);
+                     if (!this.shouldDestroyAt(x0, y0, z0)) {
+                        if (toDisplace.size() < 64 && this.shouldDisplaceAt(pos, this.world.getBlockState(pos))) {
+                           toDisplace.add(pos);
+                        }
+                        continue;
+                     }
                      if (x0 == tipX && y0 == tipY && z0 == tipZ) {
                         toRemTips.add(pos);
                      }
@@ -203,6 +211,12 @@ public class ExplosionNuke {
                this.handleTip(pos.getX(), pos.getY(), pos.getZ());
             } else {
                this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            }
+         }
+
+         for (BlockPos pos : toDisplace) {
+            if (!toRem.contains(pos)) {
+               this.displaceBlock(pos);
             }
          }
 
@@ -277,6 +291,41 @@ public class ExplosionNuke {
       hash ^= hash >>> 33;
       double dither = (double)(hash & 65535L) / 65535.0;
       return dither < destroyChance;
+   }
+
+   private boolean shouldDisplaceAt(BlockPos pos, BlockState state) {
+      if (state.liquid() || state.hasBlockEntity()) {
+         return false;
+      }
+      double dx = (double)pos.getX() + 0.5 - (double)this.posX;
+      double dy = (double)pos.getY() + 0.5 - (double)this.posY;
+      double dz = (double)pos.getZ() + 0.5 - (double)this.posZ;
+      double normalizedDistance = Math.sqrt(dx * dx + dy * dy + dz * dz) / (double)this.length;
+      if (normalizedDistance <= 0.65 || normalizedDistance >= 1.0) {
+         return false;
+      }
+      double edgeFactor = (normalizedDistance - 0.65) / 0.35;
+      double chance = 0.05 + edgeFactor * 0.25;
+      return this.positionDither(pos) < chance;
+   }
+
+   private void displaceBlock(BlockPos pos) {
+      BlockState state = this.world.getBlockState(pos);
+      if (state.isAir() || state.liquid() || state.hasBlockEntity()) {
+         return;
+      }
+      FallingBlockEntity fallingBlock = FallingBlockEntity.fall(this.world, pos, state);
+      Vec3 direction = new Vec3((double)pos.getX() + 0.5 - (double)this.posX, 0.0, (double)pos.getZ() + 0.5 - (double)this.posZ).normalize();
+      fallingBlock.setDeltaMovement(direction.x * 0.45, 0.25, direction.z * 0.45);
+      fallingBlock.dropItem = false;
+   }
+
+   private double positionDither(BlockPos pos) {
+      long hash = (long)pos.getX() * 73428767L ^ (long)pos.getY() * 91227137L ^ (long)pos.getZ() * 43828913L;
+      hash ^= hash >>> 33;
+      hash *= -49064778989728563L;
+      hash ^= hash >>> 33;
+      return (double)(hash & 65535L) / 65535.0;
    }
 
    public class CoordComparator implements Comparator<ChunkCoordIntPair> {
