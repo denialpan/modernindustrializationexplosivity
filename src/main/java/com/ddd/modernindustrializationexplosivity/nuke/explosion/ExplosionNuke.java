@@ -148,7 +148,9 @@ public class ExplosionNuke {
    }
 
    public static float masqueradeResistance(Block block) {
-      if (block == Blocks.SANDSTONE) {
+      if (block == Blocks.BEDROCK) {
+         return Float.MAX_VALUE;
+      } else if (block == Blocks.SANDSTONE) {
          return Blocks.STONE.getExplosionResistance();
       } else {
          return block == Blocks.OBSIDIAN ? Blocks.STONE.getExplosionResistance() * 3.0F : block.getExplosionResistance();
@@ -276,6 +278,9 @@ public class ExplosionNuke {
    }
 
    private boolean shouldDestroyAt(int x, int y, int z) {
+      if (this.world.getBlockState(new BlockPos(x, y, z)).is(Blocks.BEDROCK)) {
+         return false;
+      }
       double dx = (double)x + 0.5 - (double)this.posX;
       double dy = ((double)y + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
       double dz = (double)z + 0.5 - (double)this.posZ;
@@ -298,7 +303,7 @@ public class ExplosionNuke {
    }
 
    private boolean shouldDisplaceAt(BlockPos pos, BlockState state) {
-      if (state.liquid() || state.hasBlockEntity()) {
+      if (state.is(Blocks.BEDROCK) || state.liquid() || state.hasBlockEntity()) {
          return false;
       }
       double dx = (double)pos.getX() + 0.5 - (double)this.posX;
@@ -315,7 +320,7 @@ public class ExplosionNuke {
 
    private void displaceBlock(BlockPos pos) {
       BlockState state = this.world.getBlockState(pos);
-      if (state.isAir() || state.liquid() || state.hasBlockEntity()) {
+      if (state.is(Blocks.BEDROCK) || state.isAir() || state.liquid() || state.hasBlockEntity()) {
          return;
       }
       FallingBlockEntity fallingBlock = FallingBlockEntity.fall(this.world, pos, state);
