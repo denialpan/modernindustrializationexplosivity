@@ -32,6 +32,7 @@ import com.ddd.modernindustrializationexplosivity.nuke.NukeSounds;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeExplosion;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeTorex;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeCountdown;
+import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityRadiationZone;
 import com.ddd.modernindustrializationexplosivity.nuke.rendering.EntityNukeTorexRenderer;
 import org.slf4j.Logger;
 
@@ -75,6 +76,7 @@ public class ModernIndustrializationExplosivity {
       torex.setPos(pos.x, pos.y + 0.5, pos.z);
       torex.getEntityData().set(EntityNukeTorex.SCALE, 1.2F);
       world.addFreshEntity(torex);
+      world.addFreshEntity(EntityRadiationZone.create(world, pos.x, pos.y, pos.z));
    }
 
    @EventBusSubscriber(
@@ -106,6 +108,7 @@ public class ModernIndustrializationExplosivity {
          EntityRenderers.register(NukeEntities.TOREX.get(), EntityNukeTorexRenderer::new);
          EntityRenderers.register(NukeEntities.NUKE.get(), NoopRenderer::new);
          EntityRenderers.register(NukeEntities.COUNTDOWN.get(), NoopRenderer::new);
+         EntityRenderers.register(NukeEntities.RADIATION_ZONE.get(), NoopRenderer::new);
       }
 
    }

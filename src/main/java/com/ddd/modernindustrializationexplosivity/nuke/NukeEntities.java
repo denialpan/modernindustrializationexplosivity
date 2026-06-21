@@ -10,6 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeExplosion;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeTorex;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeCountdown;
+import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityRadiationZone;
 
 public class NukeEntities {
    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, "modern_industrialization_explosivity");
@@ -25,6 +26,9 @@ public class NukeEntities {
    );
    public static final Supplier<EntityType<EntityNukeCountdown>> COUNTDOWN = ENTITY_TYPES.register(
       "nuke_countdown", () -> Builder.<EntityNukeCountdown>of(EntityNukeCountdown::new, MobCategory.MISC).sized(0.1F, 0.1F).build("nuke_countdown")
+   );
+   public static final Supplier<EntityType<EntityRadiationZone>> RADIATION_ZONE = ENTITY_TYPES.register(
+      "radiation_zone", () -> Builder.<EntityRadiationZone>of(EntityRadiationZone::new, MobCategory.MISC).sized(0.1F, 0.1F).build("radiation_zone")
    );
 
    public static void register(IEventBus modEventBus) {
