@@ -75,6 +75,7 @@ public class ModernIndustrializationExplosivity {
       EntityNukeTorex torex = new EntityNukeTorex(world);
       torex.setPos(pos.x, pos.y + 0.5, pos.z);
       torex.getEntityData().set(EntityNukeTorex.SCALE, 1.2F);
+      torex.setRenderRadius(strength + 64.0F + EntityNukeTorex.MAX_SHOCK_RING_DISTANCE);
       world.addFreshEntity(torex);
       world.addFreshEntity(EntityRadiationZone.create(world, pos.x, pos.y, pos.z));
    }

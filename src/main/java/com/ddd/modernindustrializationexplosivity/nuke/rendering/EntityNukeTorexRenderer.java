@@ -33,7 +33,10 @@ public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
    }
 
    public boolean shouldRender(EntityNukeTorex entity, Frustum frustum, double x, double y, double z) {
-      return true;
+      double dx = entity.getX() - x;
+      double dy = entity.getY() - y;
+      double dz = entity.getZ() - z;
+      return entity.shouldRenderAtSqrDistance(dx * dx + dy * dy + dz * dz);
    }
 
    public void render(EntityNukeTorex entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {

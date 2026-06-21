@@ -16,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import com.ddd.modernindustrializationexplosivity.nuke.compat.ChunkCoordIntPair;
 
 public class ExplosionNuke {
+   private static final double VERTICAL_BLAST_MULTIPLIER = 2.5;
    public HashMap<ChunkCoordIntPair, List<ExplosionNuke.FloatTriplet>> perChunk = new HashMap<>();
    public List<ChunkCoordIntPair> orderedChunks = new ArrayList<>();
    private final List<ChunkCoordIntPair> fluidCleanupChunks = new ArrayList<>();
@@ -87,7 +88,7 @@ public class ExplosionNuke {
       double dx = Math.sin(this.gspX) * Math.cos(this.gspY);
       double dz = Math.sin(this.gspX) * Math.sin(this.gspY);
       double dy = Math.cos(this.gspX);
-      return new Vec3(dx, dz, dy);
+      return new Vec3(dx, dy * VERTICAL_BLAST_MULTIPLIER, dz);
    }
 
    public void collectTip(int count) {
@@ -247,8 +248,9 @@ public class ExplosionNuke {
    }
 
    private void clearChunkFluids(int chunkX, int chunkZ) {
-      int minY = Math.max(this.world.getMinBuildHeight(), this.posY - this.length);
-      int maxY = Math.min(this.world.getMaxBuildHeight() - 1, this.posY + this.length);
+      int verticalRadius = (int)Math.ceil((double)this.length * VERTICAL_BLAST_MULTIPLIER);
+      int minY = Math.max(this.world.getMinBuildHeight(), this.posY - verticalRadius);
+      int maxY = Math.min(this.world.getMaxBuildHeight() - 1, this.posY + verticalRadius);
       int minX = chunkX << 4;
       int minZ = chunkZ << 4;
       BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -264,7 +266,7 @@ public class ExplosionNuke {
 
    private void clearFluidIfInsideBlast(BlockPos pos) {
       double dx = (double)pos.getX() + 0.5 - (double)this.posX;
-      double dy = (double)pos.getY() + 0.5 - (double)this.posY;
+      double dy = ((double)pos.getY() + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
       double dz = (double)pos.getZ() + 0.5 - (double)this.posZ;
       if (dx * dx + dy * dy + dz * dz <= (double)(this.length * this.length)
          && this.shouldDestroyAt(pos.getX(), pos.getY(), pos.getZ())
@@ -275,7 +277,7 @@ public class ExplosionNuke {
 
    private boolean shouldDestroyAt(int x, int y, int z) {
       double dx = (double)x + 0.5 - (double)this.posX;
-      double dy = (double)y + 0.5 - (double)this.posY;
+      double dy = ((double)y + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
       double dz = (double)z + 0.5 - (double)this.posZ;
       double normalizedDistance = Math.sqrt(dx * dx + dy * dy + dz * dz) / (double)this.length;
       if (normalizedDistance <= 0.65) {
@@ -300,7 +302,7 @@ public class ExplosionNuke {
          return false;
       }
       double dx = (double)pos.getX() + 0.5 - (double)this.posX;
-      double dy = (double)pos.getY() + 0.5 - (double)this.posY;
+      double dy = ((double)pos.getY() + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
       double dz = (double)pos.getZ() + 0.5 - (double)this.posZ;
       double normalizedDistance = Math.sqrt(dx * dx + dy * dy + dz * dz) / (double)this.length;
       if (normalizedDistance <= 0.65 || normalizedDistance >= 1.0) {

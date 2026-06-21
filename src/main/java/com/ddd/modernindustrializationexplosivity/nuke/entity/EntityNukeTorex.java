@@ -21,6 +21,7 @@ import com.ddd.modernindustrializationexplosivity.nuke.Util;
 import com.ddd.modernindustrializationexplosivity.nuke.compat.Vec3Old;
 
 public class EntityNukeTorex extends Entity {
+   public static final float MAX_SHOCK_RING_DISTANCE = 150.0F * 1.5F * 1.5F;
    private static final Map<UUID, EntityNukeTorex> CLIENT_CLOUDS = new ConcurrentHashMap<>();
    public double coreHeight = 3.0;
    public double convectionHeight = 3.0;
@@ -35,6 +36,7 @@ public class EntityNukeTorex extends Entity {
    public boolean didIrradiate = false;
    public static final EntityDataAccessor<Float> SCALE = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
    public static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.INT);
+   private static final EntityDataAccessor<Float> RENDER_RADIUS = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Long> START_TIME = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.LONG);
 
    public EntityNukeTorex(Level world) {
@@ -49,11 +51,12 @@ public class EntityNukeTorex extends Entity {
    protected void defineSynchedData(Builder builder) {
       builder.define(SCALE, 1.0F);
       builder.define(TYPE, 0);
+      builder.define(RENDER_RADIUS, 64.0F);
       builder.define(START_TIME, -1L);
    }
 
    public boolean shouldRenderAtSqrDistance(double distance) {
-      return true;
+      return distance <= (double)(this.getRenderRadius() * this.getRenderRadius());
    }
 
    public void tick() {
@@ -211,12 +214,16 @@ public class EntityNukeTorex extends Entity {
       if (compoundTag.contains("CloudType")) {
          this.entityData.set(TYPE, compoundTag.getInt("CloudType"));
       }
+      if (compoundTag.contains("RenderRadius")) {
+         this.entityData.set(RENDER_RADIUS, compoundTag.getFloat("RenderRadius"));
+      }
    }
 
    protected void addAdditionalSaveData(CompoundTag compoundTag) {
       compoundTag.putLong("StartTime", this.entityData.get(START_TIME));
       compoundTag.putFloat("Scale", this.entityData.get(SCALE));
       compoundTag.putInt("CloudType", this.entityData.get(TYPE));
+      compoundTag.putFloat("RenderRadius", this.entityData.get(RENDER_RADIUS));
    }
 
    @Override
@@ -262,6 +269,15 @@ public class EntityNukeTorex extends Entity {
    public EntityNukeTorex setType(int type) {
       this.entityData.set(TYPE, type);
       return this;
+   }
+
+   public EntityNukeTorex setRenderRadius(float radius) {
+      this.entityData.set(RENDER_RADIUS, radius);
+      return this;
+   }
+
+   public float getRenderRadius() {
+      return this.entityData.get(RENDER_RADIUS);
    }
 
    public double getSimulationSpeed() {
