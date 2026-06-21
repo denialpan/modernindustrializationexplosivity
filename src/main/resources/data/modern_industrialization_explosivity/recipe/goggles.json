@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "GRG",
+    "   "
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:tinted_glass"
+    },
+    "R": {
+      "item": "modern_industrialization:rubber_sheet"
+    }
+  },
+  "result": {
+    "id": "modern_industrialization_explosivity:goggles",
+    "count": 1
+  }
+}

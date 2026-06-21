@@ -1,0 +1,18 @@
+{
+  "nuclear_explosion": {
+    "sounds": [
+      "modern_industrialization_explosivity:nuclear_explosion"
+    ]
+  },
+  "railgun": {
+    "sounds": [
+      "modern_industrialization_explosivity:railgun"
+    ]
+  },
+  "coin": {
+    "sounds": [
+      "modern_industrialization_explosivity:coin"
+    ]
+  }
+}
+

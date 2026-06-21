@@ -1,0 +1,14 @@
+{
+  "item.modern_industrialization_explosivity.detonator": "Detonator",
+  "item.modern_industrialization_explosivity.goggles": "Goggles",
+  "item.modern_industrialization_explosivity.railgun": "Railgun",
+  "item.modern_industrialization_explosivity.rangefinder": "Rangefinder",
+  "item.modern_industrialization_explosivity.coin": "Coin",
+  "death.attack.nuclear_blast": "%1$s was torn apart by a nuclear blast.",
+  "itemGroup.modern_industrialization_explosivity": "Modern Nuclearization",
+  "detonator.tooltip": "Linked with nuke at:",
+  "detonator.message": "Linked Nuke",
+  "rangefinder.tooltip": "Tells you how much damage you would take if a nuke exploded at that distance",
+  "rangefinder.tooltip2": "Raw damage does not take armor into account"
+}
+

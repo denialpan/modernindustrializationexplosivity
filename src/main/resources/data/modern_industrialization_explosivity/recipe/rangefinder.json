@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PPP",
+    "OCG",
+    "PPP"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "P": {
+      "item": "modern_industrialization:steel_plate"
+    },
+    "C": {
+      "item": "modern_industrialization:electronic_circuit"
+    },
+    "O": {
+      "item": "modern_industrialization:sodium_battery"
+    }
+  },
+  "result": {
+    "id": "modern_industrialization_explosivity:rangefinder",
+    "count": 1
+  }
+}
