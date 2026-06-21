@@ -29,6 +29,7 @@ import com.ddd.modernindustrializationexplosivity.nuke.NukeComponents;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeEntities;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeItems;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeSounds;
+import com.ddd.modernindustrializationexplosivity.industrialtnt.IndustrialTntHandler;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeExplosion;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeTorex;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeCountdown;
@@ -60,6 +61,7 @@ public class ModernIndustrializationExplosivity {
       NukeItems.register(modEventBus);
       NukeSounds.register(modEventBus);
       NeoForge.EVENT_BUS.register(this);
+      NeoForge.EVENT_BUS.register(IndustrialTntHandler.class);
    }
 
    private void commonSetup(FMLCommonSetupEvent event) {
