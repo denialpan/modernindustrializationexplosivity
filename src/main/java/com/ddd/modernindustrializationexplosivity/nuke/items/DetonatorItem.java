@@ -19,6 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import com.ddd.modernindustrializationexplosivity.ModernIndustrializationExplosivity;
+import com.ddd.modernindustrializationexplosivity.ExplosivityConfig;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeComponents;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeCountdown;
 
@@ -48,8 +49,8 @@ public class DetonatorItem extends Item {
       } else {
          BlockPos selected = ((SelectedNuke)player.getItemInHand(usedHand).get(NukeComponents.SELECTED_NUKE)).getBlockPos();
          if (!level.isClientSide && level.getBlockState(selected).getBlock() == MIBlock.NUKE.get()) {
-            level.addFreshEntity(EntityNukeCountdown.create(level, selected, 240, player));
-            player.displayClientMessage(Component.translatable("detonator.countdown", EntityNukeCountdown.COUNTDOWN_TICKS / 20), true);
+            level.addFreshEntity(EntityNukeCountdown.create(level, selected, ExplosivityConfig.NUKE_STRENGTH.get(), player));
+            player.displayClientMessage(Component.translatable("detonator.countdown", ExplosivityConfig.NUKE_COUNTDOWN_SECONDS.get()), true);
             player.getItemInHand(usedHand).set(NukeComponents.SELECTED_NUKE, null);
          }
 

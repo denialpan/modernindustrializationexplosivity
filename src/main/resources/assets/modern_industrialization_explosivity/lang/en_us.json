@@ -10,6 +10,15 @@
   "detonator.message": "Linked Nuke",
   "detonator.countdown": "Detonation in %s seconds.",
   "detonator.cancelled": "Detonation cancelled: linked nuke was removed.",
+  "modern_industrialization_explosivity.configuration.title": "Modern Industrialization Explosivity Settings",
+  "modern_industrialization_explosivity.configuration.industrialTnt": "Industrial TNT",
+  "modern_industrialization_explosivity.configuration.industrialTnt.strength": "Explosion Strength",
+  "modern_industrialization_explosivity.configuration.industrialTnt.strength.tooltip": "The explosion strength of Industrial TNT. Vanilla TNT has a strength of 4.",
+  "modern_industrialization_explosivity.configuration.nuke": "Nuke",
+  "modern_industrialization_explosivity.configuration.nuke.strength": "Explosion Strength",
+  "modern_industrialization_explosivity.configuration.nuke.strength.tooltip": "The destruction radius and strength of a nuclear detonation.",
+  "modern_industrialization_explosivity.configuration.nuke.countdownSeconds": "Countdown Duration",
+  "modern_industrialization_explosivity.configuration.nuke.countdownSeconds.tooltip": "The delay between using a linked detonator and detonation, in seconds.",
   "rangefinder.tooltip": "Tells you how much damage you would take if a nuke exploded at that distance",
   "rangefinder.tooltip2": "Raw damage does not take armor into account"
 }

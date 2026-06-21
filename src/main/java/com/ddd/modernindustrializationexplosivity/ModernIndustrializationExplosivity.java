@@ -14,6 +14,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
@@ -54,6 +58,10 @@ public class ModernIndustrializationExplosivity {
    );
 
    public ModernIndustrializationExplosivity(IEventBus modEventBus, ModContainer modContainer) {
+      modContainer.registerConfig(ModConfig.Type.SERVER, ExplosivityConfig.SPEC);
+      if (FMLEnvironment.dist == Dist.CLIENT) {
+         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+      }
       modEventBus.addListener(this::commonSetup);
       NukeComponents.register(modEventBus);
       NukeArmorMaterials.register(modEventBus);

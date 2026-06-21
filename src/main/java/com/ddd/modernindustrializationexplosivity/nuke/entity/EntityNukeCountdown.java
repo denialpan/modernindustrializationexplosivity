@@ -15,16 +15,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import com.ddd.modernindustrializationexplosivity.ModernIndustrializationExplosivity;
+import com.ddd.modernindustrializationexplosivity.ExplosivityConfig;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeEntities;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeComponents;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeItems;
 import com.ddd.modernindustrializationexplosivity.nuke.items.SelectedNuke;
 
 public class EntityNukeCountdown extends Entity {
-    public static final int COUNTDOWN_TICKS = 200;
     private BlockPos target = BlockPos.ZERO;
     private UUID causeId;
     private int strength;
+    private int durationTicks;
 
     public EntityNukeCountdown(EntityType<?> type, Level level) {
         super(type, level);
@@ -35,6 +36,7 @@ public class EntityNukeCountdown extends Entity {
         EntityNukeCountdown countdown = new EntityNukeCountdown(NukeEntities.COUNTDOWN.get(), level);
         countdown.target = target.immutable();
         countdown.strength = strength;
+        countdown.durationTicks = ExplosivityConfig.NUKE_COUNTDOWN_SECONDS.get() * 20;
         countdown.causeId = cause == null ? null : cause.getUUID();
         countdown.setPos(target.getCenter());
         return countdown;
@@ -55,11 +57,11 @@ public class EntityNukeCountdown extends Entity {
         if (this.tickCount > 0 && this.tickCount % 20 == 0) {
             ServerPlayer player = this.getCausePlayer();
             if (player != null) {
-                int seconds = (int) Math.ceil((double) (COUNTDOWN_TICKS - this.tickCount) / 20.0);
+                int seconds = (int) Math.ceil((double) (this.durationTicks - this.tickCount) / 20.0);
                 player.displayClientMessage(Component.translatable("detonator.countdown", Math.max(seconds, 0)), true);
             }
         }
-        if (this.tickCount < COUNTDOWN_TICKS) return;
+        if (this.tickCount < this.durationTicks) return;
 
         this.level().setBlock(this.target, Blocks.AIR.defaultBlockState(), 11);
         Entity cause = this.getCausePlayer();
@@ -92,6 +94,7 @@ public class EntityNukeCountdown extends Entity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         this.target = BlockPos.of(tag.getLong("Target"));
         this.strength = tag.getInt("Strength");
+        this.durationTicks = tag.contains("DurationTicks") ? tag.getInt("DurationTicks") : ExplosivityConfig.NUKE_COUNTDOWN_SECONDS.get() * 20;
         this.causeId = tag.hasUUID("Cause") ? tag.getUUID("Cause") : null;
     }
 
@@ -99,6 +102,7 @@ public class EntityNukeCountdown extends Entity {
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putLong("Target", this.target.asLong());
         tag.putInt("Strength", this.strength);
+        tag.putInt("DurationTicks", this.durationTicks);
         if (this.causeId != null) tag.putUUID("Cause", this.causeId);
     }
 }

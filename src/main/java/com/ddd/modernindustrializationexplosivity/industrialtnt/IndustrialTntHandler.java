@@ -16,10 +16,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
+import com.ddd.modernindustrializationexplosivity.ExplosivityConfig;
 
 /** Adds TNT behaviour to Modern Industrialization's otherwise generic industrial TNT block. */
 public final class IndustrialTntHandler {
-   public static final float EXPLOSION_POWER = 24.0F;
    private static final ResourceLocation INDUSTRIAL_TNT = ResourceLocation.fromNamespaceAndPath("modern_industrialization", "industrial_tnt");
 
    private IndustrialTntHandler() {
@@ -82,7 +82,7 @@ public final class IndustrialTntHandler {
       }
 
       level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-      level.explode(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, EXPLOSION_POWER, Level.ExplosionInteraction.TNT);
+      level.explode(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, ExplosivityConfig.INDUSTRIAL_TNT_STRENGTH.get(), Level.ExplosionInteraction.TNT);
       return true;
    }
 
