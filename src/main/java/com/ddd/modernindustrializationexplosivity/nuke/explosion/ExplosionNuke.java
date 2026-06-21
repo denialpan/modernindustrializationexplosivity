@@ -10,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import com.ddd.modernindustrializationexplosivity.nuke.compat.ChunkCoordIntPair;
@@ -241,6 +242,7 @@ public class ExplosionNuke {
       if (this.hasFluidCleanupRemaining()) {
          ChunkCoordIntPair chunk = this.fluidCleanupChunks.get(this.nextFluidCleanupChunk++);
          this.clearChunkFluids(chunk.chunkXPos, chunk.chunkZPos);
+         this.igniteCraterChunk(chunk.chunkXPos, chunk.chunkZPos);
       }
    }
 
@@ -326,6 +328,30 @@ public class ExplosionNuke {
       hash *= -49064778989728563L;
       hash ^= hash >>> 33;
       return (double)(hash & 65535L) / 65535.0;
+   }
+
+   private void igniteCraterChunk(int chunkX, int chunkZ) {
+      int minX = chunkX << 4;
+      int minZ = chunkZ << 4;
+      for (int x = minX; x < minX + 16; x++) {
+         for (int z = minZ; z < minZ + 16; z++) {
+            double dx = (double)x + 0.5 - (double)this.posX;
+            double dz = (double)z + 0.5 - (double)this.posZ;
+            double normalizedDistance = Math.sqrt(dx * dx + dz * dz) / (double)this.length;
+            if (normalizedDistance >= 1.0) continue;
+
+            double radialBand = 0.4 + 0.6 * Math.pow(Math.cos(normalizedDistance * Math.PI * 4.0), 2.0);
+            double ignitionChance = 0.50 * Math.pow(1.0 - normalizedDistance, 1.35) * radialBand;
+            BlockPos surface = new BlockPos(x, this.world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
+            if (this.positionDither(surface) >= ignitionChance) continue;
+
+            BlockPos firePos = surface.above();
+            BlockState fire = Blocks.FIRE.defaultBlockState();
+            if (this.world.isEmptyBlock(firePos) && fire.canSurvive(this.world, firePos)) {
+               this.world.setBlock(firePos, fire, 3);
+            }
+         }
+      }
    }
 
    public class CoordComparator implements Comparator<ChunkCoordIntPair> {
