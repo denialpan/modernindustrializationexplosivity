@@ -64,6 +64,7 @@ public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
          ModernIndustrializationExplosivity.radiationY = entity.getY();
          ModernIndustrializationExplosivity.radiationZ = entity.getZ();
          ModernIndustrializationExplosivity.radiationRadius = entity.getRadiationRadius();
+         ModernIndustrializationExplosivity.radiationDuration = entity.getRadiationDuration();
          entity.didIrradiate = true;
       }
 

@@ -46,7 +46,7 @@ authors="ddd"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-allows modern industrialization to have some risks, instead of being all safe
+allows Modern Industrialization bombs to have some risks, instead of being all safe
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.

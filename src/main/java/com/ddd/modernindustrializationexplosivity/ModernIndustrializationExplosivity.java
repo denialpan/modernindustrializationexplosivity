@@ -57,6 +57,7 @@ public class ModernIndustrializationExplosivity {
    public static double radiationY;
    public static double radiationZ;
    public static double radiationRadius = 200.0;
+   public static long radiationDuration = 48000L;
    public static long shakeTimestamp = 0L;
    public static final int FLASH_TIME = 3000;
    public static final ResourceKey<DamageType> NUCLEAR_BLAST = ResourceKey.create(
@@ -87,6 +88,7 @@ public class ModernIndustrializationExplosivity {
 
    public static void nuke(int strength, Vec3 pos, Level world, Entity cause) {
       double extendedEffectRadius = ExplosionNuke.getExtendedEffectRadius(strength);
+      int radiationDuration = ExplosivityConfig.RADIATION_DURATION_TICKS.get();
       EntityNukeExplosion explosion = EntityNukeExplosion.statFac(world, strength, pos.x, pos.y, pos.z, cause);
       world.addFreshEntity(explosion);
       EntityNukeTorex torex = new EntityNukeTorex(world);
@@ -94,8 +96,9 @@ public class ModernIndustrializationExplosivity {
       torex.getEntityData().set(EntityNukeTorex.SCALE, 1.2F);
       torex.setRenderRadius(strength + 64.0F + EntityNukeTorex.MAX_SHOCK_RING_DISTANCE);
       torex.setRadiationRadius((float)extendedEffectRadius);
+      torex.setRadiationDuration(radiationDuration);
       world.addFreshEntity(torex);
-      world.addFreshEntity(EntityRadiationZone.create(world, pos.x, pos.y, pos.z, extendedEffectRadius));
+      world.addFreshEntity(EntityRadiationZone.create(world, pos.x, pos.y, pos.z, extendedEffectRadius, radiationDuration));
    }
 
    @EventBusSubscriber(

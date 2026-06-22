@@ -99,7 +99,7 @@ public abstract class GuiMixin {
 
    @Unique
    private static void renderRadiation(GuiGraphics context, Minecraft client) {
-      long duration = 24000L;
+      long duration = ModernIndustrializationExplosivity.radiationDuration;
       float progress = client.level == null || ModernIndustrializationExplosivity.radiationStartTime < 0L
          ? 1.0F
          : Math.clamp((float)(client.level.getDayTime() - ModernIndustrializationExplosivity.radiationStartTime) / (float)duration, 0.0F, 1.0F);

@@ -8,6 +8,7 @@ public final class ExplosivityConfig {
    public static final ModConfigSpec.IntValue INDUSTRIAL_TNT_STRENGTH;
    public static final ModConfigSpec.IntValue NUKE_STRENGTH;
    public static final ModConfigSpec.IntValue NUKE_COUNTDOWN_SECONDS;
+   public static final ModConfigSpec.IntValue RADIATION_DURATION_TICKS;
 
    static {
       ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -24,6 +25,9 @@ public final class ExplosivityConfig {
       NUKE_COUNTDOWN_SECONDS = builder.comment("Delay between using a linked detonator and detonation, in seconds.")
          .translation("modern_industrialization_explosivity.configuration.nuke.countdownSeconds")
          .defineInRange("countdownSeconds", 10, 5, 30);
+      RADIATION_DURATION_TICKS = builder.comment("How long the radiation region remains active, in ticks.")
+         .translation("modern_industrialization_explosivity.configuration.nuke.radiationDurationTicks")
+         .defineInRange("radiationDurationTicks", 48000, 20, Integer.MAX_VALUE);
       builder.pop();
       SPEC = builder.build();
    }

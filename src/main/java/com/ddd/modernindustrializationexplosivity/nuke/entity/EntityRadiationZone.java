@@ -9,23 +9,24 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import com.ddd.modernindustrializationexplosivity.ModernIndustrializationExplosivity;
+import com.ddd.modernindustrializationexplosivity.ExplosivityConfig;
 import com.ddd.modernindustrializationexplosivity.nuke.NukeEntities;
 
 public class EntityRadiationZone extends Entity {
-    public static final int DURATION_TICKS = 24000;
     private long startTime = -1L;
     private double radius = 200.0;
+    private int durationTicks = 48000;
 
     public EntityRadiationZone(EntityType<?> type, Level level) {
         super(type, level);
         this.noCulling = true;
     }
 
-    public static EntityRadiationZone create(Level level, double x, double y, double z, double radius) {
+    public static EntityRadiationZone create(Level level, double x, double y, double z, double radius, int durationTicks) {
         EntityRadiationZone zone = new EntityRadiationZone(NukeEntities.RADIATION_ZONE.get(), level);
         zone.startTime = level.getDayTime();
         zone.radius = radius;
+        zone.durationTicks = durationTicks;
         zone.setPos(x, y, z);
         return zone;
     }
@@ -38,7 +39,7 @@ public class EntityRadiationZone extends Entity {
         super.tick();
         if (this.level().isClientSide) return;
         if (this.startTime < 0L) this.startTime = this.level().getDayTime();
-        if (this.level().getDayTime() - this.startTime >= DURATION_TICKS) {
+        if (this.level().getDayTime() - this.startTime >= this.durationTicks) {
             this.discard();
             return;
         }
@@ -59,11 +60,13 @@ public class EntityRadiationZone extends Entity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         this.startTime = tag.getLong("StartTime");
         this.radius = tag.contains("Radius") ? tag.getDouble("Radius") : 200.0;
+        this.durationTicks = tag.contains("DurationTicks") ? tag.getInt("DurationTicks") : ExplosivityConfig.RADIATION_DURATION_TICKS.get();
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putLong("StartTime", this.startTime);
         tag.putDouble("Radius", this.radius);
+        tag.putInt("DurationTicks", this.durationTicks);
     }
 }

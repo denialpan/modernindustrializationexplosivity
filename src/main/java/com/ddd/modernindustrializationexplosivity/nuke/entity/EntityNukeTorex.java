@@ -38,6 +38,7 @@ public class EntityNukeTorex extends Entity {
    public static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Float> RENDER_RADIUS = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Float> RADIATION_RADIUS = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Integer> RADIATION_DURATION = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Long> START_TIME = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.LONG);
 
    public EntityNukeTorex(Level world) {
@@ -54,6 +55,7 @@ public class EntityNukeTorex extends Entity {
       builder.define(TYPE, 0);
       builder.define(RENDER_RADIUS, 64.0F);
       builder.define(RADIATION_RADIUS, 200.0F);
+      builder.define(RADIATION_DURATION, 48000);
       builder.define(START_TIME, -1L);
    }
 
@@ -222,6 +224,9 @@ public class EntityNukeTorex extends Entity {
       if (compoundTag.contains("RadiationRadius")) {
          this.entityData.set(RADIATION_RADIUS, compoundTag.getFloat("RadiationRadius"));
       }
+      if (compoundTag.contains("RadiationDuration")) {
+         this.entityData.set(RADIATION_DURATION, compoundTag.getInt("RadiationDuration"));
+      }
    }
 
    protected void addAdditionalSaveData(CompoundTag compoundTag) {
@@ -230,6 +235,7 @@ public class EntityNukeTorex extends Entity {
       compoundTag.putInt("CloudType", this.entityData.get(TYPE));
       compoundTag.putFloat("RenderRadius", this.entityData.get(RENDER_RADIUS));
       compoundTag.putFloat("RadiationRadius", this.entityData.get(RADIATION_RADIUS));
+      compoundTag.putInt("RadiationDuration", this.entityData.get(RADIATION_DURATION));
    }
 
    @Override
@@ -293,6 +299,15 @@ public class EntityNukeTorex extends Entity {
 
    public float getRadiationRadius() {
       return this.entityData.get(RADIATION_RADIUS);
+   }
+
+   public EntityNukeTorex setRadiationDuration(int duration) {
+      this.entityData.set(RADIATION_DURATION, duration);
+      return this;
+   }
+
+   public int getRadiationDuration() {
+      return this.entityData.get(RADIATION_DURATION);
    }
 
    public double getSimulationSpeed() {
