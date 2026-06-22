@@ -37,6 +37,7 @@ public class EntityNukeTorex extends Entity {
    public static final EntityDataAccessor<Float> SCALE = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
    public static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.INT);
    private static final EntityDataAccessor<Float> RENDER_RADIUS = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Float> RADIATION_RADIUS = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Long> START_TIME = SynchedEntityData.defineId(EntityNukeTorex.class, EntityDataSerializers.LONG);
 
    public EntityNukeTorex(Level world) {
@@ -52,6 +53,7 @@ public class EntityNukeTorex extends Entity {
       builder.define(SCALE, 1.0F);
       builder.define(TYPE, 0);
       builder.define(RENDER_RADIUS, 64.0F);
+      builder.define(RADIATION_RADIUS, 200.0F);
       builder.define(START_TIME, -1L);
    }
 
@@ -217,6 +219,9 @@ public class EntityNukeTorex extends Entity {
       if (compoundTag.contains("RenderRadius")) {
          this.entityData.set(RENDER_RADIUS, compoundTag.getFloat("RenderRadius"));
       }
+      if (compoundTag.contains("RadiationRadius")) {
+         this.entityData.set(RADIATION_RADIUS, compoundTag.getFloat("RadiationRadius"));
+      }
    }
 
    protected void addAdditionalSaveData(CompoundTag compoundTag) {
@@ -224,6 +229,7 @@ public class EntityNukeTorex extends Entity {
       compoundTag.putFloat("Scale", this.entityData.get(SCALE));
       compoundTag.putInt("CloudType", this.entityData.get(TYPE));
       compoundTag.putFloat("RenderRadius", this.entityData.get(RENDER_RADIUS));
+      compoundTag.putFloat("RadiationRadius", this.entityData.get(RADIATION_RADIUS));
    }
 
    @Override
@@ -278,6 +284,15 @@ public class EntityNukeTorex extends Entity {
 
    public float getRenderRadius() {
       return this.entityData.get(RENDER_RADIUS);
+   }
+
+   public EntityNukeTorex setRadiationRadius(float radius) {
+      this.entityData.set(RADIATION_RADIUS, radius);
+      return this;
+   }
+
+   public float getRadiationRadius() {
+      return this.entityData.get(RADIATION_RADIUS);
    }
 
    public double getSimulationSpeed() {

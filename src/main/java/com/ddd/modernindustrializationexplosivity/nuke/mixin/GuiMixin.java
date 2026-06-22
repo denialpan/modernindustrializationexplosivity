@@ -106,7 +106,7 @@ public abstract class GuiMixin {
       float targetAlpha = 0.0F;
       if (ModernIndustrializationExplosivity.radiationStartTime >= 0L && progress < 1.0F && client.player != null) {
          double distance = client.player.position().distanceTo(new Vec3(ModernIndustrializationExplosivity.radiationX, ModernIndustrializationExplosivity.radiationY, ModernIndustrializationExplosivity.radiationZ));
-         float rangeFade = 1.0F - Math.clamp((float)(distance - (ModernIndustrializationExplosivity.RADIATION_RADIUS - 24.0)) / 24.0F, 0.0F, 1.0F);
+         float rangeFade = 1.0F - Math.clamp((float)(distance - (ModernIndustrializationExplosivity.radiationRadius - 24.0)) / 24.0F, 0.0F, 1.0F);
          targetAlpha = rangeFade * (1.0F - progress) * 0.28F;
       }
 

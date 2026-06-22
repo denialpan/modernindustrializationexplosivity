@@ -20,7 +20,7 @@ public final class ExplosivityConfig {
       builder.translation("modern_industrialization_explosivity.configuration.nuke").push("nuke");
       NUKE_STRENGTH = builder.comment("Destruction radius and strength of a nuclear detonation.")
          .translation("modern_industrialization_explosivity.configuration.nuke.strength")
-         .defineInRange("strength", 240, 140, 320);
+         .defineInRange("strength", 140, 140, 320);
       NUKE_COUNTDOWN_SECONDS = builder.comment("Delay between using a linked detonator and detonation, in seconds.")
          .translation("modern_industrialization_explosivity.configuration.nuke.countdownSeconds")
          .defineInRange("countdownSeconds", 10, 5, 30);

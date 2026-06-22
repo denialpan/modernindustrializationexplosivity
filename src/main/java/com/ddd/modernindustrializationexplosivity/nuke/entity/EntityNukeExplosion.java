@@ -56,7 +56,7 @@ public class EntityNukeExplosion extends EntityExplosionChunkloading {
          if (!this.nukeDone) {
             if (!this.explosion.isAusf3Complete) {
                this.explosion.collectTip(this.speed * 10);
-            } else if (!this.explosion.perChunk.isEmpty() || this.explosion.hasFluidCleanupRemaining()) {
+            } else if (!this.explosion.perChunk.isEmpty() || this.explosion.hasFluidCleanupRemaining() || this.explosion.hasScorchRemaining()) {
                long start = System.currentTimeMillis();
 
                while (System.currentTimeMillis() < start + 30L) {
@@ -68,6 +68,11 @@ public class EntityNukeExplosion extends EntityExplosionChunkloading {
                      ChunkCoordIntPair chunk = this.explosion.getNextFluidCleanupChunk();
                      this.loadChunk(chunk.chunkXPos, chunk.chunkZPos);
                      this.explosion.processFluidCleanupChunk();
+                  } else if (this.explosion.hasScorchRemaining()) {
+                     ChunkCoordIntPair chunk = this.explosion.getNextScorchChunk();
+                     this.loadChunk(chunk.chunkXPos, chunk.chunkZPos);
+                     this.explosion.processScorchChunk();
+                     break;
                   } else {
                      break;
                   }

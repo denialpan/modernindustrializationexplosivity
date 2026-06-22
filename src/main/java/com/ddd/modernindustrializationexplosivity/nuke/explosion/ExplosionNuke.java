@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,10 +18,17 @@ import com.ddd.modernindustrializationexplosivity.nuke.compat.ChunkCoordIntPair;
 
 public class ExplosionNuke {
    private static final double VERTICAL_BLAST_MULTIPLIER = 2.5;
+   public static final double SCORCH_RADIUS_MULTIPLIER = 2.0;
+   public static final double EXTENDED_EFFECT_RADIUS_MULTIPLIER = SCORCH_RADIUS_MULTIPLIER * 0.75;
+   private static final int MAX_SURFACE_VEGETATION_DEPTH = 12;
    public HashMap<ChunkCoordIntPair, List<ExplosionNuke.FloatTriplet>> perChunk = new HashMap<>();
    public List<ChunkCoordIntPair> orderedChunks = new ArrayList<>();
    private final List<ChunkCoordIntPair> fluidCleanupChunks = new ArrayList<>();
+   private final List<ChunkCoordIntPair> scorchBandChunks = new ArrayList<>();
    private int nextFluidCleanupChunk;
+   private int nextScorchChunk;
+   private int scorchBandInnerRadius;
+   private int scorchBandOuterRadius;
    private ExplosionNuke.CoordComparator comparator = new ExplosionNuke.CoordComparator();
    int posX;
    int posY;
@@ -66,6 +74,53 @@ public class ExplosionNuke {
             }
          }
       }
+   }
+
+   private double distanceToChunkSqr(ChunkCoordIntPair chunk) {
+      int minX = chunk.chunkXPos << 4;
+      int minZ = chunk.chunkZPos << 4;
+      double nearestX = Math.clamp((double)this.posX, (double)minX, (double)(minX + 16));
+      double nearestZ = Math.clamp((double)this.posZ, (double)minZ, (double)(minZ + 16));
+      double dx = nearestX - (double)this.posX;
+      double dz = nearestZ - (double)this.posZ;
+      return dx * dx + dz * dz;
+   }
+
+   public static double getExtendedEffectRadius(int destructionRadius) {
+      return (double)destructionRadius * EXTENDED_EFFECT_RADIUS_MULTIPLIER;
+   }
+
+   private void prepareNextScorchBand() {
+      this.scorchBandChunks.clear();
+      this.nextScorchChunk = 0;
+      int radius = (int)Math.ceil((double)this.length * SCORCH_RADIUS_MULTIPLIER);
+      this.scorchBandOuterRadius = Math.min(this.scorchBandInnerRadius + 16, radius);
+      int minChunkX = Math.floorDiv(this.posX - this.scorchBandOuterRadius, 16);
+      int maxChunkX = Math.floorDiv(this.posX + this.scorchBandOuterRadius, 16);
+      int minChunkZ = Math.floorDiv(this.posZ - this.scorchBandOuterRadius, 16);
+      int maxChunkZ = Math.floorDiv(this.posZ + this.scorchBandOuterRadius, 16);
+      double innerRadiusSquared = (double)(this.scorchBandInnerRadius * this.scorchBandInnerRadius);
+      double outerRadiusSquared = (double)(this.scorchBandOuterRadius * this.scorchBandOuterRadius);
+
+      for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+         for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+            ChunkCoordIntPair chunk = new ChunkCoordIntPair(chunkX, chunkZ);
+            if (this.distanceToChunkSqr(chunk) <= outerRadiusSquared && this.farthestDistanceToChunkSqr(chunk) > innerRadiusSquared) {
+               this.scorchBandChunks.add(chunk);
+            }
+         }
+      }
+      this.scorchBandChunks.sort(Comparator.comparingDouble(this::distanceToChunkSqr));
+   }
+
+   private double farthestDistanceToChunkSqr(ChunkCoordIntPair chunk) {
+      int minX = chunk.chunkXPos << 4;
+      int minZ = chunk.chunkZPos << 4;
+      double farthestX = Math.abs((double)this.posX - (double)minX) > Math.abs((double)this.posX - (double)(minX + 16)) ? minX : minX + 16;
+      double farthestZ = Math.abs((double)this.posZ - (double)minZ) > Math.abs((double)this.posZ - (double)(minZ + 16)) ? minZ : minZ + 16;
+      double dx = farthestX - (double)this.posX;
+      double dz = farthestZ - (double)this.posZ;
+      return dx * dx + dz * dz;
    }
 
    private void generateGspUp() {
@@ -245,8 +300,83 @@ public class ExplosionNuke {
       if (this.hasFluidCleanupRemaining()) {
          ChunkCoordIntPair chunk = this.fluidCleanupChunks.get(this.nextFluidCleanupChunk++);
          this.clearChunkFluids(chunk.chunkXPos, chunk.chunkZPos);
-         this.igniteCraterChunk(chunk.chunkXPos, chunk.chunkZPos);
       }
+   }
+
+   public boolean hasScorchRemaining() {
+      int radius = (int)Math.ceil((double)this.length * SCORCH_RADIUS_MULTIPLIER);
+      return this.nextScorchChunk < this.scorchBandChunks.size() || this.scorchBandInnerRadius < radius;
+   }
+
+   public ChunkCoordIntPair getNextScorchChunk() {
+      if (!this.hasScorchRemaining()) {
+         return null;
+      }
+      if (this.nextScorchChunk >= this.scorchBandChunks.size()) {
+         this.prepareNextScorchBand();
+      }
+      return this.scorchBandChunks.get(this.nextScorchChunk);
+   }
+
+   /** Processes only the exposed surface of a chunk, keeping the extended vegetation cleanup inexpensive. */
+   public void processScorchChunk() {
+      if (!this.hasScorchRemaining()) {
+         return;
+      }
+
+      ChunkCoordIntPair chunk = this.scorchBandChunks.get(this.nextScorchChunk++);
+      int radius = (int)Math.ceil((double)this.length * SCORCH_RADIUS_MULTIPLIER);
+      double innerRadiusSquared = (double)(this.scorchBandInnerRadius * this.scorchBandInnerRadius);
+      double outerRadiusSquared = (double)(this.scorchBandOuterRadius * this.scorchBandOuterRadius);
+      int minX = chunk.chunkXPos << 4;
+      int minZ = chunk.chunkZPos << 4;
+      BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+      for (int x = minX; x < minX + 16; x++) {
+         for (int z = minZ; z < minZ + 16; z++) {
+            double dx = (double)x + 0.5 - (double)this.posX;
+            double dz = (double)z + 0.5 - (double)this.posZ;
+            double distanceSquared = dx * dx + dz * dz;
+            if (distanceSquared <= innerRadiusSquared || distanceSquared > outerRadiusSquared || distanceSquared > (double)(radius * radius)) {
+               continue;
+            }
+            if (!this.shouldScorchColumn(x, z, radius)) {
+               continue;
+            }
+
+            int topY = this.world.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+            for (int depth = 0; depth < MAX_SURFACE_VEGETATION_DEPTH && topY - depth >= this.world.getMinBuildHeight(); depth++) {
+               pos.set(x, topY - depth, z);
+               BlockState state = this.world.getBlockState(pos);
+               if (!this.isScorchableVegetation(state)) {
+                  break;
+               }
+               this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            }
+         }
+      }
+      this.igniteScorchedChunk(chunk.chunkXPos, chunk.chunkZPos, innerRadiusSquared, outerRadiusSquared);
+      if (this.nextScorchChunk >= this.scorchBandChunks.size()) {
+         this.scorchBandInnerRadius = this.scorchBandOuterRadius;
+      }
+   }
+
+   private boolean isScorchableVegetation(BlockState state) {
+      return state.is(BlockTags.LEAVES)
+         || state.is(BlockTags.FLOWERS)
+         || state.is(BlockTags.CROPS)
+         || state.is(BlockTags.SAPLINGS)
+         || state.is(Blocks.GRASS_BLOCK)
+         || state.is(Blocks.SHORT_GRASS)
+         || state.is(Blocks.TALL_GRASS)
+         || state.is(Blocks.FERN)
+         || state.is(Blocks.LARGE_FERN)
+         || state.is(Blocks.DEAD_BUSH)
+         || state.is(Blocks.VINE)
+         || state.is(Blocks.GLOW_LICHEN)
+         || state.is(Blocks.BROWN_MUSHROOM)
+         || state.is(Blocks.RED_MUSHROOM)
+         || state.is(Blocks.SNOW)
+         || state.is(Blocks.SNOW_BLOCK);
    }
 
    private void clearChunkFluids(int chunkX, int chunkZ) {
@@ -264,6 +394,23 @@ public class ExplosionNuke {
             }
          }
       }
+   }
+
+   /** Uses a deterministic dither so the expanded scorch radius tapers rather than ending abruptly. */
+   private boolean shouldScorchColumn(int x, int z, int radius) {
+      double dx = (double)x + 0.5 - (double)this.posX;
+      double dz = (double)z + 0.5 - (double)this.posZ;
+      double normalizedDistance = Math.sqrt(dx * dx + dz * dz) / (double)radius;
+      if (normalizedDistance <= 0.65) {
+         return true;
+      }
+      if (normalizedDistance >= 1.0) {
+         return false;
+      }
+
+      double fade = (normalizedDistance - 0.65) / 0.35;
+      double scorchChance = (1.0 - fade) * (1.0 - fade);
+      return this.positionDither(x, 0, z) < scorchChance;
    }
 
    private void clearFluidIfInsideBlast(BlockPos pos) {
@@ -330,21 +477,28 @@ public class ExplosionNuke {
    }
 
    private double positionDither(BlockPos pos) {
-      long hash = (long)pos.getX() * 73428767L ^ (long)pos.getY() * 91227137L ^ (long)pos.getZ() * 43828913L;
+      return this.positionDither(pos.getX(), pos.getY(), pos.getZ());
+   }
+
+   private double positionDither(int x, int y, int z) {
+      long hash = (long)x * 73428767L ^ (long)y * 91227137L ^ (long)z * 43828913L;
       hash ^= hash >>> 33;
       hash *= -49064778989728563L;
       hash ^= hash >>> 33;
       return (double)(hash & 65535L) / 65535.0;
    }
 
-   private void igniteCraterChunk(int chunkX, int chunkZ) {
+   private void igniteScorchedChunk(int chunkX, int chunkZ, double innerRadiusSquared, double outerRadiusSquared) {
       int minX = chunkX << 4;
       int minZ = chunkZ << 4;
+      double fireRadius = getExtendedEffectRadius(this.length);
       for (int x = minX; x < minX + 16; x++) {
          for (int z = minZ; z < minZ + 16; z++) {
             double dx = (double)x + 0.5 - (double)this.posX;
             double dz = (double)z + 0.5 - (double)this.posZ;
-            double normalizedDistance = Math.sqrt(dx * dx + dz * dz) / (double)this.length;
+            double distanceSquared = dx * dx + dz * dz;
+            if (distanceSquared <= innerRadiusSquared || distanceSquared > outerRadiusSquared) continue;
+            double normalizedDistance = Math.sqrt(dx * dx + dz * dz) / fireRadius;
             if (normalizedDistance >= 1.0) continue;
 
             double radialBand = 0.4 + 0.6 * Math.pow(Math.cos(normalizedDistance * Math.PI * 4.0), 2.0);
