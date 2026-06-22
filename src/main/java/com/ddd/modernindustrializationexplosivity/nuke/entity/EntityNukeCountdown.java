@@ -9,6 +9,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -72,7 +73,7 @@ public class EntityNukeCountdown extends Entity {
             ServerPlayer player = this.getCausePlayer();
             if (player != null) {
                 int seconds = (int) Math.ceil((double) (this.durationTicks - this.tickCount) / 20.0);
-                player.displayClientMessage(Component.translatable("detonator.countdown", Math.max(seconds, 0)), true);
+                player.displayClientMessage(this.countdownMessage(Math.max(seconds, 0)), true);
             }
         }
         if (this.tickCount < this.durationTicks) return;
@@ -87,6 +88,11 @@ public class EntityNukeCountdown extends Entity {
         if (this.causeId == null) return null;
         Player player = ((ServerLevel) this.level()).getPlayerByUUID(this.causeId);
         return player instanceof ServerPlayer serverPlayer ? serverPlayer : null;
+    }
+
+    private Component countdownMessage(int seconds) {
+        Component message = Component.translatable("detonator.countdown", seconds);
+        return seconds <= 5 ? message.copy().withStyle(ChatFormatting.RED) : message;
     }
 
     private void cancelCountdown() {

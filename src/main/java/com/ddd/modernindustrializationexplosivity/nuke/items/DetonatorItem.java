@@ -50,7 +50,11 @@ public class DetonatorItem extends Item {
          BlockPos selected = ((SelectedNuke)player.getItemInHand(usedHand).get(NukeComponents.SELECTED_NUKE)).getBlockPos();
          if (!level.isClientSide && level.getBlockState(selected).getBlock() == MIBlock.NUKE.get()) {
             level.addFreshEntity(EntityNukeCountdown.create(level, selected, ExplosivityConfig.NUKE_STRENGTH.get(), player));
-            player.displayClientMessage(Component.translatable("detonator.countdown", ExplosivityConfig.NUKE_COUNTDOWN_SECONDS.get()), true);
+            Component countdownMessage = Component.translatable("detonator.countdown", ExplosivityConfig.NUKE_COUNTDOWN_SECONDS.get());
+            if (ExplosivityConfig.NUKE_COUNTDOWN_SECONDS.get() <= 5) {
+               countdownMessage = countdownMessage.copy().withStyle(ChatFormatting.RED);
+            }
+            player.displayClientMessage(countdownMessage, true);
             player.getItemInHand(usedHand).set(NukeComponents.SELECTED_NUKE, null);
          }
 
