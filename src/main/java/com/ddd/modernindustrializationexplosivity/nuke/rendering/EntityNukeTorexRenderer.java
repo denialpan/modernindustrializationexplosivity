@@ -14,14 +14,10 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider.Context;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import com.ddd.modernindustrializationexplosivity.ModernIndustrializationExplosivity;
-import com.ddd.modernindustrializationexplosivity.nuke.NukeSounds;
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeTorex;
 
 public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
@@ -72,19 +68,10 @@ public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
       }
 
       if (player != null
-         && entity.getAge() < 20
-         && (double)player.distanceTo(entity) < ((double)entity.getAge() * 1.5 + 1.0) * 1.5
+         && (double)player.distanceTo(entity) <= (double)entity.getRadiationRadius()
          && !entity.didPlaySound
          && PLAYED_EXPLOSION_SOUNDS.add(entity.getUUID())) {
-         entity.level()
-            .playLocalSound(
-               new BlockPos(entity.getBlockX(), entity.getBlockY(), entity.getBlockZ()),
-               (SoundEvent)NukeSounds.NUCLEAR_EXPLOSION.get(),
-               SoundSource.BLOCKS,
-               1.0F,
-               1.0F,
-               false
-            );
+         Minecraft.getInstance().getSoundManager().play(new NukeExplosionSound(entity));
          entity.didPlaySound = true;
       }
 
