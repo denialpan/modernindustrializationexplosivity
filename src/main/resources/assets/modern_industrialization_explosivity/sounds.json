@@ -4,6 +4,21 @@
       "modern_industrialization_explosivity:nuclear_explosion"
     ]
   },
+  "air_siren": {
+    "sounds": [
+      "modern_industrialization_explosivity:air_siren"
+    ]
+  },
+  "nuclear_countdown": {
+    "sounds": [
+      "modern_industrialization_explosivity:nuclear_countdown"
+    ]
+  },
+  "nuclear_defuse": {
+    "sounds": [
+      "modern_industrialization_explosivity:nuclear_defuse"
+    ]
+  },
   "railgun": {
     "sounds": [
       "modern_industrialization_explosivity:railgun"
@@ -15,4 +30,3 @@
     ]
   }
 }
-

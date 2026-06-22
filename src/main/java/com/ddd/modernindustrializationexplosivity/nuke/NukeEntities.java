@@ -25,7 +25,11 @@ public class NukeEntities {
             .build("torex")
    );
    public static final Supplier<EntityType<EntityNukeCountdown>> COUNTDOWN = ENTITY_TYPES.register(
-      "nuke_countdown", () -> Builder.<EntityNukeCountdown>of(EntityNukeCountdown::new, MobCategory.MISC).sized(0.1F, 0.1F).build("nuke_countdown")
+      "nuke_countdown", () -> Builder.<EntityNukeCountdown>of(EntityNukeCountdown::new, MobCategory.MISC)
+            .sized(0.1F, 0.1F)
+            .clientTrackingRange(20)
+            .updateInterval(1)
+            .build("nuke_countdown")
    );
    public static final Supplier<EntityType<EntityRadiationZone>> RADIATION_ZONE = ENTITY_TYPES.register(
       "radiation_zone", () -> Builder.<EntityRadiationZone>of(EntityRadiationZone::new, MobCategory.MISC).sized(0.1F, 0.1F).build("radiation_zone")

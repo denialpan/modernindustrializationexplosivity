@@ -18,6 +18,15 @@ public class NukeSounds {
    public static final DeferredHolder<SoundEvent, SoundEvent> COIN = SOUND_EVENTS.register(
       "coin", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath("modern_industrialization_explosivity", "coin"), 16.0F)
    );
+   public static final DeferredHolder<SoundEvent, SoundEvent> AIR_SIREN = SOUND_EVENTS.register(
+      "air_siren", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath("modern_industrialization_explosivity", "air_siren"), 64.0F)
+   );
+   public static final DeferredHolder<SoundEvent, SoundEvent> NUCLEAR_COUNTDOWN = SOUND_EVENTS.register(
+      "nuclear_countdown", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath("modern_industrialization_explosivity", "nuclear_countdown"), 64.0F)
+   );
+   public static final DeferredHolder<SoundEvent, SoundEvent> NUCLEAR_DEFUSE = SOUND_EVENTS.register(
+      "nuclear_defuse", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath("modern_industrialization_explosivity", "nuclear_defuse"), 64.0F)
+   );
 
    public static void register(IEventBus modBus) {
       SOUND_EVENTS.register(modBus);

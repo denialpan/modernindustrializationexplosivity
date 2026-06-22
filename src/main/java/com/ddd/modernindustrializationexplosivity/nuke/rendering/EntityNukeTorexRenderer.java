@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
 import java.awt.Color;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -27,6 +29,7 @@ public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
    public static final ResourceLocation FLASH_TEXTURE = ResourceLocation.fromNamespaceAndPath("modern_industrialization_explosivity", "textures/flare.png");
    private static final RenderType CLOUDLET_TYPE = RenderType.entityTranslucent(CLOUDLET_TEXTURE);
    private static final RenderType FLASH_TYPE = RenderType.entityTranslucent(FLASH_TEXTURE);
+   private static final Set<java.util.UUID> PLAYED_EXPLOSION_SOUNDS = new HashSet<>();
 
    public EntityNukeTorexRenderer(Context context) {
       super(context);
@@ -68,7 +71,11 @@ public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
          entity.didIrradiate = true;
       }
 
-      if (player != null && entity.getAge() < 20 && (double)player.distanceTo(entity) < ((double)entity.getAge() * 1.5 + 1.0) * 1.5 && !entity.didPlaySound) {
+      if (player != null
+         && entity.getAge() < 20
+         && (double)player.distanceTo(entity) < ((double)entity.getAge() * 1.5 + 1.0) * 1.5
+         && !entity.didPlaySound
+         && PLAYED_EXPLOSION_SOUNDS.add(entity.getUUID())) {
          entity.level()
             .playLocalSound(
                new BlockPos(entity.getBlockX(), entity.getBlockY(), entity.getBlockZ()),
@@ -137,5 +144,9 @@ public class EntityNukeTorexRenderer extends EntityRenderer<EntityNukeTorex> {
 
    public ResourceLocation getTextureLocation(EntityNukeTorex entityNukeTorex) {
       return null;
+   }
+
+   public static void clearPlayedSoundCache() {
+      PLAYED_EXPLOSION_SOUNDS.clear();
    }
 }

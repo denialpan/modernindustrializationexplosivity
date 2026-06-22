@@ -1,6 +1,10 @@
 package com.ddd.modernindustrializationexplosivity;
 
 import com.mojang.logging.LogUtils;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.core.registries.Registries;
@@ -40,6 +44,7 @@ import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityNukeCountdow
 import com.ddd.modernindustrializationexplosivity.nuke.entity.EntityRadiationZone;
 import com.ddd.modernindustrializationexplosivity.nuke.explosion.ExplosionNuke;
 import com.ddd.modernindustrializationexplosivity.nuke.rendering.EntityNukeTorexRenderer;
+import com.ddd.modernindustrializationexplosivity.nuke.rendering.NukeCountdownSirenSound;
 import org.slf4j.Logger;
 
 @Mod("modern_industrialization_explosivity")
@@ -98,6 +103,9 @@ public class ModernIndustrializationExplosivity {
       value = {Dist.CLIENT}
    )
    public static class ClientForgeEvents {
+      private static final Map<java.util.UUID, NukeCountdownSirenSound> COUNTDOWN_SIRENS = new HashMap<>();
+      private static final Set<java.util.UUID> STARTED_COUNTDOWN_SIRENS = new HashSet<>();
+
       @SubscribeEvent
       public static void onRenderWorld(RenderLevelStageEvent event) {
          if (event.getStage() == Stage.AFTER_LEVEL) {
@@ -108,6 +116,37 @@ public class ModernIndustrializationExplosivity {
       @SubscribeEvent
       public static void onClientTick(ClientTickEvent.Post event) {
          EntityNukeTorex.tickDetachedClientClouds();
+         syncCountdownSirens();
+      }
+
+      private static void syncCountdownSirens() {
+         net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
+         if (client.level == null) {
+            COUNTDOWN_SIRENS.values().forEach(NukeCountdownSirenSound::stopSiren);
+            COUNTDOWN_SIRENS.clear();
+            STARTED_COUNTDOWN_SIRENS.clear();
+            EntityNukeTorexRenderer.clearPlayedSoundCache();
+            return;
+         }
+
+         Set<java.util.UUID> activeCountdowns = new HashSet<>();
+         for (Entity entity : client.level.entitiesForRendering()) {
+            if (entity instanceof EntityNukeCountdown countdown && !countdown.isRemoved()) {
+               activeCountdowns.add(countdown.getUUID());
+               if (STARTED_COUNTDOWN_SIRENS.add(countdown.getUUID())) {
+                  NukeCountdownSirenSound siren = new NukeCountdownSirenSound(countdown);
+                  client.getSoundManager().play(siren);
+                  COUNTDOWN_SIRENS.put(countdown.getUUID(), siren);
+               }
+            }
+         }
+         COUNTDOWN_SIRENS.entrySet().removeIf(entry -> {
+            if (activeCountdowns.contains(entry.getKey())) {
+               return false;
+            }
+            entry.getValue().stopSiren();
+            return true;
+         });
       }
    }
 
