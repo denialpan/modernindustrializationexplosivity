@@ -6,12 +6,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import com.ddd.modernindustrializationexplosivity.nuke.compat.ChunkCoordIntPair;
@@ -386,11 +389,35 @@ public class ExplosionNuke {
       int minX = chunkX << 4;
       int minZ = chunkZ << 4;
       BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+      LevelChunk chunk = this.world.getChunk(chunkX, chunkZ);
 
-      for (int y = minY; y <= maxY; y++) {
-         for (int x = minX; x < minX + 16; x++) {
-            for (int z = minZ; z < minZ + 16; z++) {
-               this.clearFluidIfInsideBlast(pos.set(x, y, z));
+      for (int sectionIndex = 0; sectionIndex < chunk.getSections().length; sectionIndex++) {
+         LevelChunkSection section = chunk.getSections()[sectionIndex];
+         if (!section.maybeHas(state -> !state.getFluidState().isEmpty())) {
+            continue;
+         }
+
+         int sectionMinY = SectionPos.sectionToBlockCoord(this.world.getSectionYFromSectionIndex(sectionIndex));
+         int scanMinY = Math.max(minY, sectionMinY);
+         int scanMaxY = Math.min(maxY, sectionMinY + 15);
+         if (scanMinY > scanMaxY) {
+            continue;
+         }
+
+         for (int y = scanMinY; y <= scanMaxY; y++) {
+            int localY = y - sectionMinY;
+            for (int x = minX; x < minX + 16; x++) {
+               int localX = x & 15;
+               for (int z = minZ; z < minZ + 16; z++) {
+                  double dx = (double)x + 0.5 - (double)this.posX;
+                  double dy = ((double)y + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
+                  double dz = (double)z + 0.5 - (double)this.posZ;
+                  if (dx * dx + dy * dy + dz * dz <= (double)(this.length * this.length)
+                     && !section.getFluidState(localX, localY, z & 15).isEmpty()
+                     && this.shouldDestroyAt(x, y, z)) {
+                     this.world.setBlock(pos.set(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+                  }
+               }
             }
          }
       }
@@ -411,17 +438,6 @@ public class ExplosionNuke {
       double fade = (normalizedDistance - 0.65) / 0.35;
       double scorchChance = (1.0 - fade) * (1.0 - fade);
       return this.positionDither(x, 0, z) < scorchChance;
-   }
-
-   private void clearFluidIfInsideBlast(BlockPos pos) {
-      double dx = (double)pos.getX() + 0.5 - (double)this.posX;
-      double dy = ((double)pos.getY() + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
-      double dz = (double)pos.getZ() + 0.5 - (double)this.posZ;
-      if (dx * dx + dy * dy + dz * dz <= (double)(this.length * this.length)
-         && this.shouldDestroyAt(pos.getX(), pos.getY(), pos.getZ())
-         && !this.world.getFluidState(pos).isEmpty()) {
-         this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-      }
    }
 
    private boolean shouldDestroyAt(int x, int y, int z) {
