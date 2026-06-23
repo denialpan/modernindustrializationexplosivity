@@ -32,7 +32,11 @@ public class NukeEntities {
             .build("nuke_countdown")
    );
    public static final Supplier<EntityType<EntityRadiationZone>> RADIATION_ZONE = ENTITY_TYPES.register(
-      "radiation_zone", () -> Builder.<EntityRadiationZone>of(EntityRadiationZone::new, MobCategory.MISC).sized(0.1F, 0.1F).build("radiation_zone")
+      "radiation_zone", () -> Builder.<EntityRadiationZone>of(EntityRadiationZone::new, MobCategory.MISC)
+            .sized(0.1F, 0.1F)
+            .clientTrackingRange(30)
+            .updateInterval(20)
+            .build("radiation_zone")
    );
 
    public static void register(IEventBus modEventBus) {

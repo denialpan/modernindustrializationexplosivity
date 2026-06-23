@@ -120,6 +120,7 @@ public class ModernIndustrializationExplosivity {
       public static void onClientTick(ClientTickEvent.Post event) {
          EntityNukeTorex.tickDetachedClientClouds();
          syncCountdownSirens();
+         syncRadiationOverlay();
       }
 
       private static void syncCountdownSirens() {
@@ -129,6 +130,7 @@ public class ModernIndustrializationExplosivity {
             COUNTDOWN_SIRENS.clear();
             STARTED_COUNTDOWN_SIRENS.clear();
             EntityNukeTorexRenderer.clearPlayedSoundCache();
+            ModernIndustrializationExplosivity.radiationStartTime = -1L;
             return;
          }
 
@@ -150,6 +152,37 @@ public class ModernIndustrializationExplosivity {
             entry.getValue().stopSiren();
             return true;
          });
+      }
+
+      private static void syncRadiationOverlay() {
+         net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
+         if (client.level == null || client.player == null) {
+            return;
+         }
+
+         EntityRadiationZone closestZone = null;
+         double closestDistance = Double.MAX_VALUE;
+         for (Entity entity : client.level.entitiesForRendering()) {
+            if (!(entity instanceof EntityRadiationZone zone) || zone.isRemoved()) {
+               continue;
+            }
+            long elapsed = client.level.getDayTime() - zone.getRadiationStartTime();
+            double distance = client.player.position().distanceTo(zone.position());
+            if (elapsed >= zone.getRadiationDurationTicks() || distance > zone.getRadiationRadius() || distance >= closestDistance) {
+               continue;
+            }
+            closestZone = zone;
+            closestDistance = distance;
+         }
+
+         if (closestZone != null) {
+            ModernIndustrializationExplosivity.radiationStartTime = closestZone.getRadiationStartTime();
+            ModernIndustrializationExplosivity.radiationX = closestZone.getX();
+            ModernIndustrializationExplosivity.radiationY = closestZone.getY();
+            ModernIndustrializationExplosivity.radiationZ = closestZone.getZ();
+            ModernIndustrializationExplosivity.radiationRadius = closestZone.getRadiationRadius();
+            ModernIndustrializationExplosivity.radiationDuration = closestZone.getRadiationDurationTicks();
+         }
       }
    }
 
