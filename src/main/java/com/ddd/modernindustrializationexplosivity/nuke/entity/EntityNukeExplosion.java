@@ -142,7 +142,7 @@ public class EntityNukeExplosion extends EntityExplosionChunkloading {
       mk5.strength = r;
       mk5.cause = cause;
       int baseRayBudget = (int)Math.ceil(100000.0 / (double)r);
-      int rayCount = (int)((Math.PI * 5.0 / 2.0) * Math.pow((double)r, 2.0));
+      int rayCount = ExplosionNuke.getRayCountForStrength(r);
       int adaptiveRayBudget = (int)Math.ceil((double)rayCount / (double)(TARGET_RAY_PREPARATION_TICKS * 10));
       mk5.speed = Math.max(baseRayBudget, adaptiveRayBudget);
       mk5.setPos(x, y, z);

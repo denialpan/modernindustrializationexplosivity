@@ -9,6 +9,7 @@ public final class ExplosivityConfig {
    public static final ModConfigSpec.IntValue NUKE_STRENGTH;
    public static final ModConfigSpec.IntValue NUKE_COUNTDOWN_SECONDS;
    public static final ModConfigSpec.IntValue RADIATION_DURATION_TICKS;
+   public static final ModConfigSpec.IntValue MAX_NUKE_RAY_COUNT;
 
    static {
       ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -28,6 +29,9 @@ public final class ExplosivityConfig {
       RADIATION_DURATION_TICKS = builder.comment("How long the radiation region remains active, in ticks.")
          .translation("modern_industrialization_explosivity.configuration.nuke.radiationDurationTicks")
          .defineInRange("radiationDurationTicks", 48000, 20, Integer.MAX_VALUE);
+      MAX_NUKE_RAY_COUNT = builder.comment("Maximum number of rays used for one nuke. Higher values improve outer blast detail but increase calculation time.")
+         .translation("modern_industrialization_explosivity.configuration.nuke.maxRayCount")
+         .defineInRange("maxRayCount", 500_000, 100_000, 5_000_000);
       builder.pop();
       SPEC = builder.build();
    }

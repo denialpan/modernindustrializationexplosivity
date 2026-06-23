@@ -17,6 +17,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.phys.Vec3;
+import com.ddd.modernindustrializationexplosivity.ExplosivityConfig;
 import com.ddd.modernindustrializationexplosivity.nuke.compat.ChunkCoordIntPair;
 
 public class ExplosionNuke {
@@ -52,7 +53,7 @@ public class ExplosionNuke {
       this.posZ = z;
       this.strength = strength;
       this.length = length;
-      this.gspNumMax = (int)((Math.PI * 5.0 / 2.0) * Math.pow((double)this.strength, 2.0));
+      this.gspNumMax = getRayCountForStrength(this.strength);
       this.gspNum = 1;
       this.gspX = Math.PI;
       this.gspY = 0.0;
@@ -91,6 +92,11 @@ public class ExplosionNuke {
 
    public static double getExtendedEffectRadius(int destructionRadius) {
       return (double)destructionRadius * EXTENDED_EFFECT_RADIUS_MULTIPLIER;
+   }
+
+   public static int getRayCountForStrength(int strength) {
+      long uncappedRayCount = (long)Math.ceil(Math.PI * 5.0 / 2.0 * (double)strength * (double)strength);
+      return (int)Math.min(uncappedRayCount, (long)ExplosivityConfig.MAX_NUKE_RAY_COUNT.get());
    }
 
    private void prepareNextScorchBand() {
