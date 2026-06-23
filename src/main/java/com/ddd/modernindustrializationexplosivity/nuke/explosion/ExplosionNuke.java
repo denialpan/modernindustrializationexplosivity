@@ -407,6 +407,9 @@ public class ExplosionNuke {
          || state.is(Blocks.GLOW_LICHEN)
          || state.is(Blocks.BROWN_MUSHROOM)
          || state.is(Blocks.RED_MUSHROOM)
+         || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
+         || state.is(Blocks.RED_MUSHROOM_BLOCK)
+         || state.is(Blocks.MUSHROOM_STEM)
          || state.is(Blocks.SNOW)
          || state.is(Blocks.SNOW_BLOCK);
    }
