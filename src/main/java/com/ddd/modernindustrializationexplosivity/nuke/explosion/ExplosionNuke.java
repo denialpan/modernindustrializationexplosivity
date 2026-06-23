@@ -156,8 +156,7 @@ public class ExplosionNuke {
          Vec3 vec = this.getSpherical2cartesian();
          int length = (int)Math.ceil((double)this.strength);
          float res = (float)this.strength;
-         ExplosionNuke.FloatTriplet lastPos = null;
-         HashSet<ChunkCoordIntPair> chunkCoords = new HashSet<>();
+         ExplosionNuke.FloatTriplet tip = null;
 
          for (int i = 0; i < length && i <= this.length; i++) {
             float x0 = (float)((double)this.posX + vec.x * (double)i);
@@ -174,9 +173,7 @@ public class ExplosionNuke {
             }
 
             if (res > 0.0F && block.getBlock() != Blocks.AIR) {
-               lastPos = new ExplosionNuke.FloatTriplet(x0, y0, z0);
-               ChunkCoordIntPair chunkPos = new ChunkCoordIntPair(iX >> 4, iZ >> 4);
-               chunkCoords.add(chunkPos);
+               tip = new ExplosionNuke.FloatTriplet(x0, y0, z0, 0, 0, true);
             }
 
             if (res <= 0.0F || i + 1 >= this.length || i == length - 1) {
@@ -184,14 +181,8 @@ public class ExplosionNuke {
             }
          }
 
-         for (ChunkCoordIntPair pos : chunkCoords) {
-            List<ExplosionNuke.FloatTriplet> triplets = this.perChunk.get(pos);
-            if (triplets == null) {
-               triplets = new ArrayList<>();
-               this.perChunk.put(pos, triplets);
-            }
-
-            triplets.add(lastPos);
+         if (tip != null) {
+            this.storeNormalizedRaySegments(tip);
          }
 
          this.generateGspUp();
@@ -203,6 +194,56 @@ public class ExplosionNuke {
       this.orderedChunks.addAll(this.perChunk.keySet());
       this.orderedChunks.sort(this.comparator);
       this.isAusf3Complete = true;
+   }
+
+   /** Splits the original normalized tip-to-origin traversal into local chunk segments once. */
+   private void storeNormalizedRaySegments(ExplosionNuke.FloatTriplet tip) {
+      Vec3 ray = new Vec3((double)(tip.xCoord - (float)this.posX), (double)(tip.yCoord - (float)this.posY), (double)(tip.zCoord - (float)this.posZ));
+      double rayLength = ray.length();
+      if (rayLength == 0.0) {
+         return;
+      }
+
+      float directionX = (float)(ray.x / rayLength);
+      float directionY = (float)(ray.y / rayLength);
+      float directionZ = (float)(ray.z / rayLength);
+      List<ExplosionNuke.FloatTriplet> segments = new ArrayList<>();
+      ChunkCoordIntPair currentChunk = null;
+      int segmentStart = 0;
+      boolean segmentContainsSolid = false;
+
+      for (int i = 0; (double)i < rayLength; i++) {
+         int x = (int)Math.floor((double)this.posX + (double)directionX * (double)i);
+         int y = (int)Math.floor((double)this.posY + (double)directionY * (double)i);
+         int z = (int)Math.floor((double)this.posZ + (double)directionZ * (double)i);
+         ChunkCoordIntPair chunk = new ChunkCoordIntPair(x >> 4, z >> 4);
+         if (currentChunk == null) {
+            currentChunk = chunk;
+            segmentStart = i;
+         } else if (!currentChunk.equals(chunk)) {
+            segments.add(new ExplosionNuke.FloatTriplet(directionX, directionY, directionZ, segmentStart, i - 1, segmentContainsSolid));
+            currentChunk = chunk;
+            segmentStart = i;
+            segmentContainsSolid = false;
+         }
+
+         if (!this.world.isEmptyBlock(new BlockPos(x, y, z))) {
+            segmentContainsSolid = true;
+         }
+      }
+      if (currentChunk != null) {
+         segments.add(new ExplosionNuke.FloatTriplet(directionX, directionY, directionZ, segmentStart, (int)Math.ceil(rayLength) - 1, segmentContainsSolid));
+      }
+
+      for (ExplosionNuke.FloatTriplet segment : segments) {
+         if (!segment.containsSolid) {
+            continue;
+         }
+         int x = (int)Math.floor((double)this.posX + (double)segment.xCoord * (double)segment.startIndex);
+         int z = (int)Math.floor((double)this.posZ + (double)segment.zCoord * (double)segment.startIndex);
+         ChunkCoordIntPair chunk = new ChunkCoordIntPair(x >> 4, z >> 4);
+         this.perChunk.computeIfAbsent(chunk, ignored -> new ArrayList<>()).add(segment);
+      }
    }
 
    public static float masqueradeResistance(Block block) {
@@ -220,60 +261,28 @@ public class ExplosionNuke {
          ChunkCoordIntPair coord = this.orderedChunks.get(0);
          List<ExplosionNuke.FloatTriplet> list = this.perChunk.get(coord);
          HashSet<BlockPos> toRem = new HashSet<>();
-         HashSet<BlockPos> toRemTips = new HashSet<>();
          HashSet<BlockPos> toDisplace = new HashSet<>();
-         int chunkX = coord.chunkXPos;
-         int chunkZ = coord.chunkZPos;
-         // The prior distance estimate could begin after a ray had already crossed a
-         // chunk edge, leaving fluid strips on chunk borders. Every recorded ray is
-         // now scanned from its origin and only its matching chunk segment is used.
-         int enter = 0;
 
-         for (ExplosionNuke.FloatTriplet triplet : list) {
-            float x = triplet.xCoord;
-            float y = triplet.yCoord;
-            float z = triplet.zCoord;
-            Vec3 vec = new Vec3((double)(x - (float)this.posX), (double)(y - (float)this.posY), (double)(z - (float)this.posZ));
-            double pX = vec.x / vec.length();
-            double pY = vec.y / vec.length();
-            double pZ = vec.z / vec.length();
-            int tipX = (int)Math.floor((double)x);
-            int tipY = (int)Math.floor((double)y);
-            int tipZ = (int)Math.floor((double)z);
-            boolean inChunk = false;
-
-            for (int i = enter; (double)i < vec.length(); i++) {
-               int x0 = (int)Math.floor((double)this.posX + pX * (double)i);
-               int y0 = (int)Math.floor((double)this.posY + pY * (double)i);
-               int z0 = (int)Math.floor((double)this.posZ + pZ * (double)i);
-               if (x0 >> 4 == chunkX && z0 >> 4 == chunkZ) {
-                  inChunk = true;
-                  if (!this.world.isEmptyBlock(new BlockPos(x0, y0, z0))) {
-                     BlockPos pos = new BlockPos(x0, y0, z0);
-                     if (!this.shouldDestroyAt(x0, y0, z0)) {
-                        if (toDisplace.size() < 64 && this.shouldDisplaceAt(pos, this.world.getBlockState(pos))) {
-                           toDisplace.add(pos);
-                        }
-                        continue;
+         for (ExplosionNuke.FloatTriplet segment : list) {
+            for (int i = segment.startIndex; i <= segment.endIndex; i++) {
+               int x0 = (int)Math.floor((double)this.posX + (double)segment.xCoord * (double)i);
+               int y0 = (int)Math.floor((double)this.posY + (double)segment.yCoord * (double)i);
+               int z0 = (int)Math.floor((double)this.posZ + (double)segment.zCoord * (double)i);
+               if (!this.world.isEmptyBlock(new BlockPos(x0, y0, z0))) {
+                  BlockPos pos = new BlockPos(x0, y0, z0);
+                  if (!this.shouldDestroyAt(x0, y0, z0)) {
+                     if (toDisplace.size() < 64 && this.shouldDisplaceAt(pos, this.world.getBlockState(pos))) {
+                        toDisplace.add(pos);
                      }
-                     if (x0 == tipX && y0 == tipY && z0 == tipZ) {
-                        toRemTips.add(pos);
-                     }
-
-                     toRem.add(pos);
+                     continue;
                   }
-               } else if (inChunk) {
-                  break;
+                  toRem.add(pos);
                }
             }
          }
 
          for (BlockPos pos : toRem) {
-            if (toRemTips.contains(pos)) {
-               this.handleTip(pos.getX(), pos.getY(), pos.getZ());
-            } else {
-               this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-            }
+            this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
          }
 
          for (BlockPos pos : toDisplace) {
@@ -545,11 +554,17 @@ public class ExplosionNuke {
       public float xCoord;
       public float yCoord;
       public float zCoord;
+      public int startIndex;
+      public int endIndex;
+      public boolean containsSolid;
 
-      public FloatTriplet(float x, float y, float z) {
+      public FloatTriplet(float x, float y, float z, int startIndex, int endIndex, boolean containsSolid) {
          this.xCoord = x;
          this.yCoord = y;
          this.zCoord = z;
+         this.startIndex = startIndex;
+         this.endIndex = endIndex;
+         this.containsSolid = containsSolid;
       }
    }
 }
