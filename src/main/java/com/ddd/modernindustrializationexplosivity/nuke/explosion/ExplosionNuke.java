@@ -25,7 +25,8 @@ public class ExplosionNuke {
    public static final double SCORCH_RADIUS_MULTIPLIER = 2.0;
    public static final double EXTENDED_EFFECT_RADIUS_MULTIPLIER = SCORCH_RADIUS_MULTIPLIER * 0.75;
    private static final int FLUID_CLEANUP_PASSES = 2;
-   private static final int MAX_SURFACE_VEGETATION_DEPTH = 12;
+   private static final int SCORCH_DEPTH_BELOW_ORIGIN = 32;
+   private static final int SCORCH_HEIGHT_ABOVE_ORIGIN = 64;
    public HashMap<ChunkCoordIntPair, List<ExplosionNuke.FloatTriplet>> perChunk = new HashMap<>();
    public List<ChunkCoordIntPair> orderedChunks = new ArrayList<>();
    private final List<ChunkCoordIntPair> fluidCleanupChunks = new ArrayList<>();
@@ -360,6 +361,8 @@ public class ExplosionNuke {
       double outerRadiusSquared = (double)(this.scorchBandOuterRadius * this.scorchBandOuterRadius);
       int minX = chunk.chunkXPos << 4;
       int minZ = chunk.chunkZPos << 4;
+      int minY = Math.max(this.world.getMinBuildHeight(), this.posY - SCORCH_DEPTH_BELOW_ORIGIN);
+      int maxY = Math.min(this.world.getMaxBuildHeight() - 1, this.posY + SCORCH_HEIGHT_ABOVE_ORIGIN);
       BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
       for (int x = minX; x < minX + 16; x++) {
          for (int z = minZ; z < minZ + 16; z++) {
@@ -373,14 +376,12 @@ public class ExplosionNuke {
                continue;
             }
 
-            int topY = this.world.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-            for (int depth = 0; depth < MAX_SURFACE_VEGETATION_DEPTH && topY - depth >= this.world.getMinBuildHeight(); depth++) {
-               pos.set(x, topY - depth, z);
+            for (int y = minY; y <= maxY; y++) {
+               pos.set(x, y, z);
                BlockState state = this.world.getBlockState(pos);
-               if (!this.isScorchableVegetation(state)) {
-                  break;
+               if (this.isScorchableVegetation(state)) {
+                  this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                }
-               this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             }
          }
       }
