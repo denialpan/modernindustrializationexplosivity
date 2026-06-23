@@ -297,7 +297,7 @@ public class ExplosionNuke {
 
          for (long packedPos : toRem) {
             BlockPos pos = BlockPos.of(packedPos);
-            this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), this.destructionUpdateFlags());
          }
 
          for (long packedPos : toDisplace) {
@@ -312,7 +312,7 @@ public class ExplosionNuke {
    }
 
    protected void handleTip(int x, int y, int z) {
-      this.world.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+      this.world.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), this.destructionUpdateFlags());
    }
 
    public boolean hasFluidCleanupRemaining() {
@@ -380,7 +380,7 @@ public class ExplosionNuke {
                pos.set(x, y, z);
                BlockState state = this.world.getBlockState(pos);
                if (this.isScorchableVegetation(state)) {
-                  this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                  this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), this.destructionUpdateFlags());
                }
             }
          }
@@ -446,7 +446,7 @@ public class ExplosionNuke {
                   double dz = (double)z + 0.5 - (double)this.posZ;
                   if (dx * dx + dy * dy + dz * dz <= (double)(this.length * this.length)
                      && !section.getFluidState(localX, localY, z & 15).isEmpty()) {
-                     this.world.setBlock(pos.set(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+                     this.world.setBlock(pos.set(x, y, z), Blocks.AIR.defaultBlockState(), this.destructionUpdateFlags());
                   }
                }
             }
@@ -530,6 +530,10 @@ public class ExplosionNuke {
       hash *= -49064778989728563L;
       hash ^= hash >>> 33;
       return (double)(hash & 65535L) / 65535.0;
+   }
+
+   private int destructionUpdateFlags() {
+      return ExplosivityConfig.UPDATE_NEIGHBORS_DURING_DESTRUCTION.get() ? Block.UPDATE_NEIGHBORS | Block.UPDATE_CLIENTS : Block.UPDATE_CLIENTS;
    }
 
    private void igniteScorchedChunk(int chunkX, int chunkZ, double innerRadiusSquared, double outerRadiusSquared) {

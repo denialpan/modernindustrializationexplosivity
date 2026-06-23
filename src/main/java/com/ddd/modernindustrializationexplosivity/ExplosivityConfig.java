@@ -10,6 +10,7 @@ public final class ExplosivityConfig {
    public static final ModConfigSpec.IntValue NUKE_COUNTDOWN_SECONDS;
    public static final ModConfigSpec.IntValue RADIATION_DURATION_TICKS;
    public static final ModConfigSpec.IntValue MAX_NUKE_RAY_COUNT;
+   public static final ModConfigSpec.BooleanValue UPDATE_NEIGHBORS_DURING_DESTRUCTION;
 
    static {
       ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -32,6 +33,9 @@ public final class ExplosivityConfig {
       MAX_NUKE_RAY_COUNT = builder.comment("Maximum number of rays used for one nuke. Higher values improve outer blast detail but increase calculation time.")
          .translation("modern_industrialization_explosivity.configuration.nuke.maxRayCount")
          .defineInRange("maxRayCount", 500_000, 100_000, 5_000_000);
+      UPDATE_NEIGHBORS_DURING_DESTRUCTION = builder.comment("Whether mass block removal notifies neighboring blocks. Disabling this reduces update cascades during destruction.")
+         .translation("modern_industrialization_explosivity.configuration.nuke.updateNeighborsDuringDestruction")
+         .define("updateNeighborsDuringDestruction", false);
       builder.pop();
       SPEC = builder.build();
    }
