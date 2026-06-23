@@ -55,6 +55,11 @@ public class EntityNukeExplosion extends EntityExplosionChunkloading {
 
          if (!this.nukeDone) {
             if (!this.explosion.isAusf3Complete) {
+               if (this.explosion.hasFluidCleanupRemaining()) {
+                  ChunkCoordIntPair chunk = this.explosion.getNextFluidCleanupChunk();
+                  this.loadChunk(chunk.chunkXPos, chunk.chunkZPos);
+                  this.explosion.processFluidCleanupChunk();
+               }
                this.explosion.collectTip(this.speed * 10);
             } else if (!this.explosion.perChunk.isEmpty() || this.explosion.hasFluidCleanupRemaining() || this.explosion.hasScorchRemaining()) {
                long start = System.currentTimeMillis();

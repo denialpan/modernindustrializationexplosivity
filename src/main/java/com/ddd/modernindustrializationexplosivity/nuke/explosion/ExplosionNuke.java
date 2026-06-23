@@ -24,12 +24,14 @@ public class ExplosionNuke {
    private static final double VERTICAL_BLAST_MULTIPLIER = 2.5;
    public static final double SCORCH_RADIUS_MULTIPLIER = 2.0;
    public static final double EXTENDED_EFFECT_RADIUS_MULTIPLIER = SCORCH_RADIUS_MULTIPLIER * 0.75;
+   private static final int FLUID_CLEANUP_PASSES = 2;
    private static final int MAX_SURFACE_VEGETATION_DEPTH = 12;
    public HashMap<ChunkCoordIntPair, List<ExplosionNuke.FloatTriplet>> perChunk = new HashMap<>();
    public List<ChunkCoordIntPair> orderedChunks = new ArrayList<>();
    private final List<ChunkCoordIntPair> fluidCleanupChunks = new ArrayList<>();
    private final List<ChunkCoordIntPair> scorchBandChunks = new ArrayList<>();
    private int nextFluidCleanupChunk;
+   private int fluidCleanupPass;
    private int nextScorchChunk;
    private int scorchBandInnerRadius;
    private int scorchBandOuterRadius;
@@ -313,7 +315,7 @@ public class ExplosionNuke {
    }
 
    public boolean hasFluidCleanupRemaining() {
-      return this.nextFluidCleanupChunk < this.fluidCleanupChunks.size();
+      return !this.fluidCleanupChunks.isEmpty() && this.fluidCleanupPass < FLUID_CLEANUP_PASSES;
    }
 
    public ChunkCoordIntPair getNextFluidCleanupChunk() {
@@ -324,6 +326,10 @@ public class ExplosionNuke {
       if (this.hasFluidCleanupRemaining()) {
          ChunkCoordIntPair chunk = this.fluidCleanupChunks.get(this.nextFluidCleanupChunk++);
          this.clearChunkFluids(chunk.chunkXPos, chunk.chunkZPos);
+         if (this.nextFluidCleanupChunk >= this.fluidCleanupChunks.size()) {
+            this.fluidCleanupPass++;
+            this.nextFluidCleanupChunk = 0;
+         }
       }
    }
 
@@ -434,8 +440,7 @@ public class ExplosionNuke {
                   double dy = ((double)y + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
                   double dz = (double)z + 0.5 - (double)this.posZ;
                   if (dx * dx + dy * dy + dz * dz <= (double)(this.length * this.length)
-                     && !section.getFluidState(localX, localY, z & 15).isEmpty()
-                     && this.shouldDestroyAt(x, y, z)) {
+                     && !section.getFluidState(localX, localY, z & 15).isEmpty()) {
                      this.world.setBlock(pos.set(x, y, z), Blocks.AIR.defaultBlockState(), 3);
                   }
                }
