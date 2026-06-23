@@ -67,7 +67,7 @@ public class EntityRadiationZone extends Entity {
             this.discard();
             return;
         }
-        if (this.tickCount % 20 != 0) return;
+        if (this.tickCount % 100 != 0) return;
 
         AABB bounds = this.getBoundingBox().inflate(this.getRadiationRadius());
         for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, bounds)) {
@@ -75,6 +75,7 @@ public class EntityRadiationZone extends Entity {
             if (distance > this.getRadiationRadius()) continue;
             int amplifier = Math.min(4, (int) Math.floor((1.0 - distance / this.getRadiationRadius()) * 5.0));
             entity.addEffect(new MobEffectInstance(MobEffects.POISON, 200, amplifier, false, true, true));
+            entity.addEffect(new MobEffectInstance(MobEffects.HUNGER, 200, 2, false, true, true));
             entity.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 200, 0, false, true, true));
             entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 0, false, true, true));
         }
