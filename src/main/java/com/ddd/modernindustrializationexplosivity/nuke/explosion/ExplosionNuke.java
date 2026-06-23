@@ -214,7 +214,8 @@ public class ExplosionNuke {
       float directionY = (float)(ray.y / rayLength);
       float directionZ = (float)(ray.z / rayLength);
       List<ExplosionNuke.FloatTriplet> segments = new ArrayList<>();
-      ChunkCoordIntPair currentChunk = null;
+      int currentChunkX = Integer.MIN_VALUE;
+      int currentChunkZ = Integer.MIN_VALUE;
       int segmentStart = 0;
       boolean segmentContainsSolid = false;
 
@@ -222,13 +223,16 @@ public class ExplosionNuke {
          int x = (int)Math.floor((double)this.posX + (double)directionX * (double)i);
          int y = (int)Math.floor((double)this.posY + (double)directionY * (double)i);
          int z = (int)Math.floor((double)this.posZ + (double)directionZ * (double)i);
-         ChunkCoordIntPair chunk = new ChunkCoordIntPair(x >> 4, z >> 4);
-         if (currentChunk == null) {
-            currentChunk = chunk;
+         int chunkX = x >> 4;
+         int chunkZ = z >> 4;
+         if (currentChunkX == Integer.MIN_VALUE) {
+            currentChunkX = chunkX;
+            currentChunkZ = chunkZ;
             segmentStart = i;
-         } else if (!currentChunk.equals(chunk)) {
+         } else if (currentChunkX != chunkX || currentChunkZ != chunkZ) {
             segments.add(new ExplosionNuke.FloatTriplet(directionX, directionY, directionZ, segmentStart, i - 1, segmentContainsSolid));
-            currentChunk = chunk;
+            currentChunkX = chunkX;
+            currentChunkZ = chunkZ;
             segmentStart = i;
             segmentContainsSolid = false;
          }
@@ -237,7 +241,7 @@ public class ExplosionNuke {
             segmentContainsSolid = true;
          }
       }
-      if (currentChunk != null) {
+      if (currentChunkX != Integer.MIN_VALUE) {
          segments.add(new ExplosionNuke.FloatTriplet(directionX, directionY, directionZ, segmentStart, (int)Math.ceil(rayLength) - 1, segmentContainsSolid));
       }
 
@@ -266,34 +270,36 @@ public class ExplosionNuke {
       if (!this.perChunk.isEmpty()) {
          ChunkCoordIntPair coord = this.orderedChunks.get(0);
          List<ExplosionNuke.FloatTriplet> list = this.perChunk.get(coord);
-         HashSet<BlockPos> toRem = new HashSet<>();
-         HashSet<BlockPos> toDisplace = new HashSet<>();
+         HashSet<Long> toRem = new HashSet<>();
+         HashSet<Long> toDisplace = new HashSet<>();
+         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
          for (ExplosionNuke.FloatTriplet segment : list) {
             for (int i = segment.startIndex; i <= segment.endIndex; i++) {
                int x0 = (int)Math.floor((double)this.posX + (double)segment.xCoord * (double)i);
                int y0 = (int)Math.floor((double)this.posY + (double)segment.yCoord * (double)i);
                int z0 = (int)Math.floor((double)this.posZ + (double)segment.zCoord * (double)i);
-               if (!this.world.isEmptyBlock(new BlockPos(x0, y0, z0))) {
-                  BlockPos pos = new BlockPos(x0, y0, z0);
+               BlockState state = this.world.getBlockState(mutablePos.set(x0, y0, z0));
+               if (!state.isAir() && !state.is(Blocks.BEDROCK)) {
                   if (!this.shouldDestroyAt(x0, y0, z0)) {
-                     if (toDisplace.size() < 64 && this.shouldDisplaceAt(pos, this.world.getBlockState(pos))) {
-                        toDisplace.add(pos);
+                     if (toDisplace.size() < 64 && this.shouldDisplaceAt(x0, y0, z0, state)) {
+                        toDisplace.add(BlockPos.asLong(x0, y0, z0));
                      }
                      continue;
                   }
-                  toRem.add(pos);
+                  toRem.add(BlockPos.asLong(x0, y0, z0));
                }
             }
          }
 
-         for (BlockPos pos : toRem) {
+         for (long packedPos : toRem) {
+            BlockPos pos = BlockPos.of(packedPos);
             this.world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
          }
 
-         for (BlockPos pos : toDisplace) {
-            if (!toRem.contains(pos)) {
-               this.displaceBlock(pos);
+         for (long packedPos : toDisplace) {
+            if (!toRem.contains(packedPos)) {
+               this.displaceBlock(BlockPos.of(packedPos));
             }
          }
 
@@ -456,9 +462,6 @@ public class ExplosionNuke {
    }
 
    private boolean shouldDestroyAt(int x, int y, int z) {
-      if (this.world.getBlockState(new BlockPos(x, y, z)).is(Blocks.BEDROCK)) {
-         return false;
-      }
       double dx = (double)x + 0.5 - (double)this.posX;
       double dy = ((double)y + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
       double dz = (double)z + 0.5 - (double)this.posZ;
@@ -480,20 +483,20 @@ public class ExplosionNuke {
       return dither < destroyChance;
    }
 
-   private boolean shouldDisplaceAt(BlockPos pos, BlockState state) {
+   private boolean shouldDisplaceAt(int x, int y, int z, BlockState state) {
       if (state.is(Blocks.BEDROCK) || state.liquid() || state.hasBlockEntity()) {
          return false;
       }
-      double dx = (double)pos.getX() + 0.5 - (double)this.posX;
-      double dy = ((double)pos.getY() + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
-      double dz = (double)pos.getZ() + 0.5 - (double)this.posZ;
+      double dx = (double)x + 0.5 - (double)this.posX;
+      double dy = ((double)y + 0.5 - (double)this.posY) / VERTICAL_BLAST_MULTIPLIER;
+      double dz = (double)z + 0.5 - (double)this.posZ;
       double normalizedDistance = Math.sqrt(dx * dx + dy * dy + dz * dz) / (double)this.length;
       if (normalizedDistance <= 0.65 || normalizedDistance >= 1.0) {
          return false;
       }
       double edgeFactor = (normalizedDistance - 0.65) / 0.35;
       double chance = 0.05 + edgeFactor * 0.25;
-      return this.positionDither(pos) < chance;
+      return this.positionDither(x, y, z) < chance;
    }
 
    private void displaceBlock(BlockPos pos) {
@@ -534,9 +537,9 @@ public class ExplosionNuke {
 
             double radialBand = 0.4 + 0.6 * Math.pow(Math.cos(normalizedDistance * Math.PI * 4.0), 2.0);
             double ignitionChance = 0.50 * Math.pow(1.0 - normalizedDistance, 1.35) * radialBand;
-            BlockPos surface = new BlockPos(x, this.world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
-            if (this.positionDither(surface) >= ignitionChance) continue;
+            if (this.positionDither(x, 0, z) >= ignitionChance) continue;
 
+            BlockPos surface = new BlockPos(x, this.world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
             BlockPos firePos = surface.above();
             BlockState fire = Blocks.FIRE.defaultBlockState();
             if (this.world.isEmptyBlock(firePos) && fire.canSurvive(this.world, firePos)) {
