@@ -392,6 +392,7 @@ public class ExplosionNuke {
 
    private boolean isScorchableVegetation(BlockState state) {
       return state.is(BlockTags.LEAVES)
+         || state.is(BlockTags.ICE)
          || state.is(BlockTags.FLOWERS)
          || state.is(BlockTags.CROPS)
          || state.is(BlockTags.SAPLINGS)
